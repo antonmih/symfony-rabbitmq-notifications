@@ -1,0 +1,31 @@
+App\Domain\Entity\Message:
+  type: entity
+  repositoryClass: App\Infrastructure\Doctrine\Repository\MessageRepository
+  table: message
+  id:
+    id:
+      type: uuid
+      generator:
+        strategy: NONE
+  fields:
+    content:
+      type: text
+    type:
+      type: messageType
+    status:
+      type: status
+    retry:
+      type: retry
+    userId:
+      type: string
+      nullable: true
+      length: 64
+    createdAt:
+      type: datetime
+      column: created_at
+    updatedAt:
+      type: datetime
+      column: updated_at
+  lifecycleCallbacks:
+    prePersist: [ setDatesToCurrentTime ]
+    preUpdate: [ setUpdatedAtToCurrentTime ]

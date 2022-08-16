@@ -1,0 +1,30 @@
+version: 3
+
+tasks:
+  start:
+    - docker-compose build
+    - docker-compose up -d
+    - docker-compose exec il_notificator_php composer install
+    - docker-compose exec il_notificator_php bin/console doctrine:database:create --if-not-exists --env=dev
+    - docker-compose exec il_notificator_php bin/console doctrine:migrations:migrate --env=dev --no-interaction --allow-no-migration
+
+  stop:
+    - docker-compose stop
+
+  require:
+    - docker-compose exec il_notificator_php composer require {{.CLI_ARGS}}
+
+  console:
+    - docker-compose exec il_notificator_php bin/console {{.CLI_ARGS}}
+
+  test:
+    - task: test-database-up
+    - docker-compose exec il_notificator_php vendor/bin/codecept run
+
+  test-database-up:
+    - docker-compose exec il_notificator_php bin/console doctrine:database:drop --force --env=test
+    - docker-compose exec il_notificator_php bin/console doctrine:database:create --if-not-exists --env=test
+    - docker-compose exec il_notificator_php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
+
+  psalm:
+    - docker-compose exec il_notificator_php vendor/bin/psalm {{.CLI_ARGS}}

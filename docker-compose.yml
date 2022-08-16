@@ -1,0 +1,87 @@
+version: '3'
+
+services:
+  il_notificator_postgres:
+    image: postgres:13.4
+    ports:
+      - 54321:5432
+    restart: always
+    volumes:
+      - ./deploy/docker/dev/data/db:/var/lib/postgresql/data:delegated,rw
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+    networks:
+      - il_notificator
+
+  il_notificator_postgres_test:
+    image: postgres:13.4
+    restart: always
+    environment:
+      POSTGRES_DB: app_test
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+    networks:
+      - il_notificator
+
+  il_notificator_php:
+    build: deploy/docker/dev/php
+    restart: always
+    volumes:
+      - ./:/var/www/symfony:cached
+    networks:
+      - il_notificator
+
+  il_notificator_nginx:
+    build: deploy/docker/dev/nginx
+    ports:
+      - 8082:80
+    restart: always
+    volumes:
+      - ./:/var/www/symfony:cached
+      - ./deploy/templates/default.conf:/etc/nginx/conf.d/default.conf:cached
+    networks:
+      - il_notificator
+
+  rabbitmq:
+    container_name: rabbitmq
+    hostname: rabbitmq
+    image: rabbitmq:3.8-management-alpine
+    environment:
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_VHOST: /
+    volumes:
+      - ./deploy/docker/dev/data/rabbitmq:/var/lib/rabbitmq
+    ports:
+      - 15673:15672
+      - 5673:5672
+    networks:
+      - il_notificator
+
+###> doctrine/doctrine-bundle ###
+  database:
+    image: postgres:${POSTGRES_VERSION:-13}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
+      POSTGRES_USER: ${POSTGRES_USER:-symfony}
+    volumes:
+      - db-data:/var/lib/postgresql/data:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+
+networks:
+  il_notificator:
+    driver: bridge
+
+volumes:
+  data:
+    driver: local
+
+###> doctrine/doctrine-bundle ###
+  db-data:
+###< doctrine/doctrine-bundle ###

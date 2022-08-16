@@ -1,0 +1,18 @@
+actor: ApiTester
+suite_namespace: App\Tests\api
+modules:
+  # enable helpers as array
+  enabled:
+    - Asserts
+    - Db:
+        dsn: 'pgsql:host=il_notificator_postgres_test;dbname=app_test'
+        user: 'app'
+        password: 'secret'
+    - Symfony:
+        app_path: 'src'
+        environment: 'test'
+    - Doctrine2:
+        depends: Symfony
+    - REST:
+        url: /
+        depends: Symfony
